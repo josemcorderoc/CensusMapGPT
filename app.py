@@ -1,20 +1,13 @@
 import logging
 import os
-from pathlib import Path
-from re import I
 
 import pyproj
+import sqlparse
 import streamlit as st
 from dotenv import load_dotenv
+from prompt2map import Prompt2Map
 from streamlit import session_state as ss
-
-from application.interfaces.prompt_mapper import PromptMapper
-from application.services.gpt4_map_selector import GPT4MapSelector
-from application.services.gpt4_question_mapper import GPT4QuestionMapper
-from application.services.llm_to_sql import LLMToSQL
-from application.services.sql_query_processor import SQLQueryProcessor, prettify_sql
-from infrastructure.gpt4 import GPT4
-from infrastructure.postgres_db import PostgresDB
+from streamlit_folium import folium_static
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s')
 
@@ -23,7 +16,7 @@ for attribute in ["map", "data", "query"]:
         ss[attribute] = None
 
         
-def main(question_mapper: PromptMapper):
+def main(question_mapper: Prompt2Map):
     st.set_page_config(
         page_title="MapGPT",
     )
@@ -32,7 +25,10 @@ def main(question_mapper: PromptMapper):
     def create_map(prompt_input: str):
         logging.info(f"Creating map for: {prompt_input}")
         
-        ss["map"], ss["data"], ss["query"] = question_mapper.generate(prompt_input)   
+        ss["map"] = question_mapper.to_map(prompt_input)
+        ss["query"] = question_mapper.retriever.sql_query # type: ignore
+        ss["data"] = question_mapper.data
+        
         logging.info(ss["map"], ss["data"], ss["query"])
 
     user_input = st.text_area("Ask me a question", key="user_input")
@@ -43,13 +39,13 @@ def main(question_mapper: PromptMapper):
     if ss.map:
         map_tab, data_tab, sql_tab = st.tabs(["Map", "Data", "SQL"])
         with map_tab:
-            ss.map.add_to_streamlit()
+            st_data = folium_static(ss.map)
             
         with data_tab:
-            st.dataframe(ss["data"])
+            st.dataframe(ss["data"].select_dtypes(exclude=['geometry']))
             
         with sql_tab:
-            st.code(prettify_sql(ss["query"]), language="sql")
+            st.code(sqlparse.format(ss["query"], reindent=True, keyword_case='upper'), language="sql")
         
         
 if __name__ == "__main__":
@@ -65,14 +61,6 @@ if __name__ == "__main__":
 
     if db_name is None or db_user is None or db_password is None or test_db_name is None:
         raise ValueError("Please set the DB_NAME, DB_USER, DB_PASSWORD, TEST_DB_NAME environment variables.")
-    
-    db = PostgresDB(db_name=db_name, db_user=db_user, db_password=db_password)
-    test_db = PostgresDB(db_name=test_db_name, db_user=db_user, db_password=db_password)
-    db_schema = Path("data", "db", "schema.sql").read_text()
-    
-    gpt4 = GPT4()
-    gpt2sql = LLMToSQL(llm=gpt4, db_schema=db_schema)
-    gpt4_mapselector = GPT4MapSelector(gpt4=gpt4)
-    sql_query_processor = SQLQueryProcessor(db=db, embedding=gpt4)
-    gpt4_question_mapper = GPT4QuestionMapper(db=db, prompt2sql=gpt2sql, map_selector=gpt4_mapselector, sql_query_processor=sql_query_processor ,test_db=test_db)
-    main(gpt4_question_mapper)
+
+    mapper = Prompt2Map.from_postgis("comuna", "geom", db_name=db_name, db_user=db_user, db_password=db_password)
+    main(mapper)
