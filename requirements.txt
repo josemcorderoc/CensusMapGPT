@@ -1,0 +1,9 @@
+folium==0.17.0
+geopandas==1.0.1
+pandas==2.2.2
+plotly==5.23.0
+psycopg2==2.9.9
+scipy==1.14.0
+streamlit_folium==0.21.1
+git+https://github.com/josemcorderoc/prompt2map.git@v0.1.0
+python-dotenv==1.0.1
