@@ -22,19 +22,19 @@ def main(question_mapper: Prompt2Map):
     )
     st.title("Map generation using LLMs")
     
-    def create_map(prompt_input: str):
+    def create_map():
+        prompt_input = ss["user_input"]
         logging.info(f"Creating map for: {prompt_input}")
         
         ss["map"] = question_mapper.to_map(prompt_input)
         ss["query"] = question_mapper.retriever.sql_query # type: ignore
         ss["data"] = question_mapper.data
         
-        logging.info(ss["map"], ss["data"], ss["query"])
-
-    user_input = st.text_area("Ask me a question", key="user_input")
-
-    if ss.user_input:
-        st.button("Create map 🗺️", on_click=create_map, key='classification', args=(user_input,))
+    with st.form('form', clear_on_submit=False):
+        st.text_area("""Olá! Sou um modelo de inteligência artificial especializado no Censo 2021 de Portugal. 
+            Posso gerar mapas com base nas suas perguntas sobre os dados do censo. Faça uma pergunta e veja o que posso descobrir!""",
+            key="user_input", placeholder="Exemplo: Qual é a percentagem de mulheres nas freguesias de Lisboa?")
+        st.form_submit_button("Criar mapa 🗺️", on_click=create_map)
         
     if ss.map:
         map_tab, data_tab, sql_tab = st.tabs(["Map", "Data", "SQL"])
