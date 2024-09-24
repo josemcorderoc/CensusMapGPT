@@ -18,9 +18,9 @@ for attribute in ["map", "data", "query"]:
         
 def main(question_mapper: Prompt2Map):
     st.set_page_config(
-        page_title="MapGPT",
+        page_title="Census Map GPT - PT 🇵🇹",
     )
-    st.title("Map generation using LLMs")
+    st.title("Census Map GPT - Portugal 🇵🇹")
     
     def create_map():
         prompt_input = ss["user_input"]
@@ -30,6 +30,8 @@ def main(question_mapper: Prompt2Map):
         ss["query"] = question_mapper.retriever.sql_query # type: ignore
         ss["data"] = question_mapper.data
         
+        logging.info(f"Map created")
+    
     with st.form('form', clear_on_submit=False):
         st.text_area("""Olá! Sou um modelo de inteligência artificial especializado no Censo 2021 de Portugal. 
             Posso gerar mapas com base nas suas perguntas sobre os dados do censo. Faça uma pergunta e veja o que posso descobrir!""",
@@ -37,7 +39,7 @@ def main(question_mapper: Prompt2Map):
         st.form_submit_button("Criar mapa 🗺️", on_click=create_map)
         
     if ss.map:
-        map_tab, data_tab, sql_tab = st.tabs(["Map", "Data", "SQL"])
+        map_tab, data_tab, sql_tab = st.tabs(["Mapa", "Dados", "SQL"])
         with map_tab:
             st_data = folium_static(ss.map)
             
