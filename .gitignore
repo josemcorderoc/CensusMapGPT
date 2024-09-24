@@ -22,4 +22,5 @@ build/
 # Data
 *.jsonl
 
-notebooks
+dev
+notebooks/raw
