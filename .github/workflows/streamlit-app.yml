@@ -19,9 +19,6 @@ jobs:
           python-version: "3.11"
       - uses: streamlit/streamlit-app-action@v0.0.3
         env:
-            DB_NAME: ${{ secrets.DB_NAME }}
-            DB_USER: ${{ secrets.DB_USER }}
-            DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-            TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
           app-path: app.py
