@@ -9,7 +9,7 @@ from prompt2map import Prompt2Map
 from streamlit import session_state as ss
 from streamlit_folium import folium_static
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s')
 
 for attribute in ["map", "data", "query"]:
     if attribute not in ss:
